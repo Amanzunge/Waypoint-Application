@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waypoint Map Editor</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xml2js/0.4.23/xml2js.min.js"></script>
+    <script src="{% static 'script.js' %}" defer></script>
+    <div class="control-group">
+</div>
+    <style>
+        #map {
+            height: 720px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        #controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        input {
+            width: 120px;
+        }
+        fieldset {
+            display: block;
+            margin-left: 10px;
+            margin-right: 75%;
+            padding-top: 0.35em;
+            padding-bottom: 0.625em;
+            padding-left: 0.75em;
+            padding-right: 0.75em;
+            border: 2px groove;
+        }
+        
+    </style>
+</head>
+<body>
+    <h1>Interactive Waypoint Map Editor</h1>
+    <div id="controls">
+        <input type="number" id="altitude" placeholder="Altitude (m)">
+        <input type="number" id="speed" placeholder="Speed (m/s)">
+        <input type="number" id="gimbal" placeholder="Gimbal Angle (°)">
+        <button id="export-kmz">Export KMZ</button>
+        <input type="file" id="load-kmz" accept=".kmz" style="display: none;">
+        <button id="show-load-kmz" style="cursor: pointer;">Load KMZ</button>
+    </div>
+    <div class="control-group">
+        <fieldset>
+            <legend>Return Options</legend>
+            <div>
+                <input type="radio" id="return-none" name="return-option" value="none" checked>
+                <label for="return-none">No Return</label>
+            </div>
+            <div>
+                <input type="radio" id="return-through-all" name="return-option" value="through-all">
+                <label for="return-through-all">Return Through All Waypoints</label>
+            </div>
+            <div>
+                <input type="radio" id="return-direct" name="return-option" value="direct">
+                <label for="return-direct">Return Directly to First Waypoint</label>
+            </div>
+        </fieldset>
+    </div>
+    <div id="map" ></div>
+</body>
+</html>
