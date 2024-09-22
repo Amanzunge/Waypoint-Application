@@ -10,7 +10,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xml2js/0.4.23/xml2js.min.js"></script>
-    <script src="{% static 'script.js' %}" defer></script>
+    <!--<script src="{% static 'script.js' %}" defer></script>-->
+    <script src="{% static 'waypoint.js' %}" defer></script>
+    <script src="{% static 'popup.js' %}" defer></script>
+    <script src="{% static 'path.js' %}" defer></script>
+    <script src="{% static 'kmz.js' %}" defer></script>
     <div class="control-group">
 </div>
     <style>
@@ -37,7 +41,6 @@
             padding-right: 0.75em;
             border: 2px groove;
         }
-        
     </style>
 </head>
 <body>
@@ -46,6 +49,8 @@
         <input type="number" id="altitude" placeholder="Altitude (m)">
         <input type="number" id="speed" placeholder="Speed (m/s)">
         <input type="number" id="gimbal" placeholder="Gimbal Angle (°)">
+        <button id="enable-path" onclick="enablePath()">Enable Path</button>
+        <button id="disable-path" onclick="disablePath()">Disable Path</button>
         <button id="export-kmz">Export KMZ</button>
         <input type="file" id="load-kmz" accept=".kmz" style="display: none;">
         <button id="show-load-kmz" style="cursor: pointer;">Load KMZ</button>
