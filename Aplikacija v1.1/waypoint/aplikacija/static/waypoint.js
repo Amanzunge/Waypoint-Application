@@ -28,7 +28,6 @@ function updateWaypointIcons() {
 }
 // Arrays to store waypoints and paths
 var waypoints = [];
-var paths = [];
 // Function to add a waypoint
 function addWaypoint(latlng, altitude, speed, gimbal) {
     const order = waypoints.length + 1;
@@ -55,6 +54,7 @@ function addWaypoint(latlng, altitude, speed, gimbal) {
     updateDistances();
     updatePaths();
     updateWaypointIcons();
+    updateTotalFlightLength();
 }
 
 // Delete Waypoint Function
@@ -72,8 +72,6 @@ function deleteWaypoint(marker) {
         latlng: wp.latlng,
         order: wp.order
     })));
-
-
 
     // Remove the marker from the map
     map.removeLayer(marker);
@@ -102,12 +100,9 @@ function deleteWaypoint(marker) {
     updatePaths();
     updateDistances();
     updateWaypointIcons();
+    updateTotalFlightLength();
 
 }
-
-//if(wp.order.length === waypoints.length)
-  //  waypoints[waypoints.length] =
-
 // Update function
 function saveWaypoint(marker) {
     //console.log('Saving waypoint for marker:', marker);
@@ -155,6 +150,7 @@ function saveWaypoint(marker) {
 
     updateDistances();
     updatePaths();
+    updateTotalFlightLength();
 
 }
 
@@ -191,6 +187,7 @@ function bindDragEvents(marker) {
         updateDistances();
 
         updatePaths();
+        updateTotalFlightLength();
 
     });
 }
@@ -218,37 +215,5 @@ function reorderWaypoint(waypoint, newOrder) {
     updatePaths();
     updateDistances();
     updateWaypointIcons();
-}
-
-function updatePaths() {
-    console.log('Updating paths. Number of waypoints:', waypoints.length);
-    //console.log('Waypoint coordinates:', waypoints.map(wp => wp.latlng));
-
-    // Remove old paths
-    paths.forEach(path => map.removeLayer(path));
-    paths = [];
-    if (returnPath) {
-        map.removeLayer(returnPath);
-        returnPath = null;
-    }
-
-    // Only draw paths if they are enabled and there are at least 2 waypoints
-    if (isPathEnabled && waypoints.length > 1) {
-        const pathCoordinates = waypoints.map(wp => wp.latlng);
-
-        const newPath = L.polyline(pathCoordinates, { color: 'blue' }).addTo(map);
-        paths.push(newPath);
-
-        // Handle return paths
-        if (returnOption === 'through-all') {
-            const returnCoordinates = [...pathCoordinates].reverse();
-            returnPath = L.polyline(returnCoordinates, { color: 'red', dashArray: '5, 5' }).addTo(map);
-        } else if (returnOption === 'direct' && waypoints.length > 1) {
-            const firstWaypoint = waypoints[0].latlng;
-            const lastWaypoint = waypoints[waypoints.length - 1].latlng;
-            returnPath = L.polyline([lastWaypoint, firstWaypoint], { color: 'red', dashArray: '5, 5' }).addTo(map);
-        }
-    }
-
-    //console.log('Paths updated. Number of paths:', paths.length);
+    updateTotalFlightLength();
 }
