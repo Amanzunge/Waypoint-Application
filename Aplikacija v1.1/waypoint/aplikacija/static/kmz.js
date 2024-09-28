@@ -1,8 +1,11 @@
 document.getElementById('export-kmz').addEventListener('click', exportKMZ);
 
+
+
 // Function to create KML content with waypoints and path
 function createKMLContent(waypoints, pathCoordinates, returnCoordinates = null) {
-    let kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+  addStartingWaypoint();
+  let kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
     <kml xmlns="http://www.opengis.net/kml/2.2">
       <Document>
         <name>Waypoint Map</name>
@@ -13,7 +16,6 @@ function createKMLContent(waypoints, pathCoordinates, returnCoordinates = null) 
             </Icon>
           </IconStyle>
         </Style>`;
-
     // Loop through waypoints and create placemarks for each
     waypoints.forEach((wp, index) => {
         kmlContent += `

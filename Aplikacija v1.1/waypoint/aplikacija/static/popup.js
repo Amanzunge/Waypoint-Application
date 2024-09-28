@@ -1,11 +1,10 @@
 // Function to create popup content for the waypoint marker
 function createPopupContent(latlng, altitude, speed, gimbal, order, isEditing) {
-    //console.log('Creating popup content, isEditing:', isEditing);
     if (isEditing) {
         return `
             <b>Waypoint ${order}</b><br>
             <b>Coordinates:</b> ${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}<br>
-            <b>Altitude:</b> <input type="number" class="altitude-input" value="${altitude}"> m<br>
+            <b>Altitude:</b> <input type="number" class="altitude-input" value="${altitude}" step="0.5"> m<br>
             <b>Speed:</b> <input type="number" class="speed-input" value="${speed}"> m/s<br>
             <b>Gimbal Angle:</b> <input type="number" class="gimbal-input" value="${gimbal}"> °<br>
             <b>Order:</b> <input type="number" class="order-input" value="${order}" min="1"><br>
@@ -26,7 +25,7 @@ function createPopupContent(latlng, altitude, speed, gimbal, order, isEditing) {
     }
 }
 
-// Attach events to Edit, Save, Cancel, and Delete buttons
+// Attach events to Edit, Save, Cancel, and Delete buttons and Slider
 function attachPopupEvents(marker) {
     marker.on('popupopen', function () {
         const popupElement = marker.getPopup().getElement();
@@ -49,7 +48,6 @@ function attachPopupEvents(marker) {
                     deleteWaypoint(marker);
                 }
             });
-
             // Mark that listeners are attached
             popupElement._listenersAttached = true;
         }
@@ -88,7 +86,6 @@ function getMarkerFromEvent(event) {
         return null;
     }
     //console.log('Popup element found:', popupElement);
-
     // Find the marker associated with this popup element
     const waypoint = waypoints.find(wp => {
         const markerPopupElement = wp.marker.getPopup().getElement();
@@ -111,9 +108,20 @@ function openEditMode(marker) {
         console.error('Waypoint not found for marker');
         return;
     }
-
     //console.log('Opening edit mode for waypoint:', waypoint);
     const newContent = createPopupContent(waypoint.latlng, waypoint.altitude, waypoint.speed, waypoint.gimbal, waypoint.order, true);
     marker.setPopupContent(newContent);
     marker.getPopup().update();
+}
+
+function updateHeightLabel(popupElement, newHeight) {
+    const altitudeValueSpan = popupElement.querySelector('.altitude-value');
+    if (altitudeValueSpan) {
+        altitudeValueSpan.textContent = newHeight;
+    }
+    // Update the altitude input field if it exists (in edit mode)
+    const altitudeInput = popupElement.querySelector('.altitude-input');
+    if (altitudeInput) {
+        altitudeInput.value = newHeight;
+    }
 }

@@ -19,7 +19,7 @@ let returnOption = 'none';
 let returnPath = null;
 let isPathEnabled = false;
 const label = document.getElementById('totalFlightLength');
-var totalDistanceInMeters = 1;
+var totalDistanceInMeters = 0;
 // Enable path function
 function enablePath() {
     isPathEnabled = true;
@@ -84,7 +84,6 @@ document.querySelectorAll('input[name="return-option"]').forEach(radio => {
 function updatePaths() {
     console.log('Updating paths. Number of waypoints:', waypoints.length);
     //console.log('Waypoint coordinates:', waypoints.map(wp => wp.latlng));
-
     // Remove old paths
     paths.forEach(path => map.removeLayer(path));
     paths = [];
@@ -117,10 +116,9 @@ function updatePaths() {
 function updateTotalFlightLength() {
     let totalDistance = 0;
 
-    if (isPathEnabled && waypoints.length > 1) {
-    if (waypoints.length <= 1) {
-        totalDistance = 0;
-    } else {
+    if (waypoints.length <= 1 && isPathEnabled ){
+        totalDistanceInMeters = 0;}
+    else if (isPathEnabled && waypoints.length > 1) {
     // Calculate distance between consecutive waypoints
     for (let i = 1; i < waypoints.length; i++) {
         const latlng1 = waypoints[i - 1].latlng;
@@ -128,7 +126,6 @@ function updateTotalFlightLength() {
         const distance = calculateDistance(latlng1, latlng2); // Calculate distance between waypoints
         totalDistance += distance; // Add distance to total
     }
-
     // Handle return options
     if (returnOption === 'through-all') {
         // Add the reverse path distance (waypoints in reverse order)
@@ -141,14 +138,13 @@ function updateTotalFlightLength() {
         // Add the direct distance between the last and the first waypoint
         totalDistance += calculateDistance(waypoints[waypoints.length - 1].latlng, waypoints[0].latlng);
     }
-
-    // Display the total distance with two decimal precision
     totalDistanceInMeters = totalDistance.toFixed(2);
-    if (label) {
-        label.innerHTML = `Total Flight Length: ${totalDistanceInMeters} m`;
-    } else {
-        console.error('Label for total flight length not found');
-    }
-}
-    }
+}   
+// Display the total distance with two decimal precision
+
+        if (label) {
+            label.innerHTML = `Total Flight Length: ${totalDistanceInMeters} m`;
+        }else {
+            console.error('Label for total flight length not found');
+        }
 }

@@ -1,12 +1,12 @@
 // Initialize the map
 var map = L.map('map').setView([44.77599, 20.47852], 9);
-
+globalHeight = 1;
+setupGlobalHeightSlider();
 // Add a tile layer (using OpenStreetMap tiles)
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
-
 // Function to create a custom icon
 function createCustomColorIcon(color) {
     return L.icon({
@@ -44,7 +44,7 @@ function addWaypoint(latlng, altitude, speed, gimbal) {
 
     waypoints.push({
         latlng: latlng,
-        altitude: altitude,
+        altitude: globalHeight,
         speed: speed,
         gimbal: gimbal,
         marker: marker,
@@ -55,6 +55,7 @@ function addWaypoint(latlng, altitude, speed, gimbal) {
     updatePaths();
     updateWaypointIcons();
     updateTotalFlightLength();
+    setupGlobalHeightSlider();
 }
 
 // Delete Waypoint Function
@@ -65,8 +66,6 @@ function deleteWaypoint(marker) {
         console.error('Waypoint not found for marker');
         return;
     }
-
-
     console.log('Deleting waypoint at index:', waypointIndex);
     console.log('Waypoints array before deletion:', waypoints.map(wp => ({
         latlng: wp.latlng,
@@ -101,7 +100,6 @@ function deleteWaypoint(marker) {
     updateDistances();
     updateWaypointIcons();
     updateTotalFlightLength();
-
 }
 // Update function
 function saveWaypoint(marker) {
@@ -185,7 +183,6 @@ function bindDragEvents(marker) {
 
         // Update distances and paths after dragging ends
         updateDistances();
-
         updatePaths();
         updateTotalFlightLength();
 
@@ -216,4 +213,108 @@ function reorderWaypoint(waypoint, newOrder) {
     updateDistances();
     updateWaypointIcons();
     updateTotalFlightLength();
+    setupGlobalHeightSlider();
 }
+
+function updateWaypointHeight(marker, newHeight) {
+    const waypoint = waypoints.find(wp => wp.marker === marker);
+    if (!waypoint) {
+        console.error('Waypoint not found for marker');
+        return;
+    }
+    waypoint.altitude = newHeight;
+    
+    // Update the popup content
+    const popupContent = createPopupContent(waypoint.latlng, newHeight, waypoint.speed, waypoint.gimbal, waypoint.order, false);
+    marker.setPopupContent(popupContent);
+    // If the popup is open, update its content
+    if (marker.isPopupOpen()) {
+        const popupElement = marker.getPopup().getElement();
+        if (popupElement) {
+            const heightSlider = popupElement.querySelector('.height-slider');
+            if (heightSlider) {
+                heightSlider.value = newHeight;
+            }
+            updateHeightLabel(popupElement, newHeight);
+        }
+    }
+}
+
+function updateAllWaypointsHeight(newHeight) {
+    waypoints.forEach(waypoint => {
+        waypoint.altitude = newHeight;
+        updateWaypointHeight(waypoint.marker, newHeight);
+            const popupElement = waypoint.marker.getPopup().getElement();
+            if (popupElement) {
+                const heightSlider = popupElement.querySelector('.height-slider');
+                if (heightSlider) {
+                    heightSlider.value = newHeight;
+                }
+                updateHeightLabel(popupElement, newHeight);
+            }
+        
+    });
+}
+
+
+function setupGlobalHeightSlider() {
+    const slider = document.getElementById('global-height-slider');
+    const valueDisplay = document.getElementById('global-height-value');
+
+    slider.min = 0;
+    slider.max = 30;
+    slider.step = 1;
+    slider.value = globalHeight * 2;
+    valueDisplay.textContent = globalHeight.toFixed(1);
+
+    slider.addEventListener('input', function() {
+        globalHeight = parseFloat((parseInt(this.value) / 2).toFixed(1));
+        valueDisplay.textContent = globalHeight.toFixed(1);
+        updateAllWaypointsHeight(globalHeight);
+    });
+}
+
+// Function to add the starting waypoint with altitude set to 0m
+function addStartingWaypoint() {
+    // Ensure there is at least one waypoint to copy the coordinates from
+    if (waypoints.length === 0) {
+        console.error("No waypoints exist. Please add the first waypoint.");
+        return;
+    }
+
+    // Get the coordinates of the first waypoint
+    const firstWaypoint = waypoints[0];
+    const firstLatLng = firstWaypoint.latlng;
+
+    // Set altitude to 0 (or any other value you want to fix for the starting point)
+    const altitude = 0;
+    const speed = firstWaypoint.speed;  // You can also copy speed or set it to default
+    const gimbal = firstWaypoint.gimbal; // Copy or set default gimbal angle
+
+
+    const marker = L.marker(firstLatLng, {
+        draggable: true,
+        icon: createCustomColorIcon('orange')
+    }).addTo(map);
+
+    // Add the waypoint to the waypoints array
+    waypoints.unshift({
+        latlng: firstLatLng,
+        altitude: altitude,
+        speed: speed,
+        gimbal: gimbal,
+        marker: marker,
+        order: 1  // Mark it as the first waypoint
+    });
+
+    // Reindex the remaining waypoints and update markers
+    waypoints.forEach((wp, index) => {
+        wp.order = index + 1;  // Update order for all waypoints
+        wp.marker.setPopupContent(createPopupContent(wp.latlng, wp.altitude, wp.speed, wp.gimbal, wp.order, false));
+    });
+
+    //ubaci popup
+    // Update the paths
+    updatePaths();
+}
+
