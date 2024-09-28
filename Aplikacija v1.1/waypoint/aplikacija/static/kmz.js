@@ -1,5 +1,22 @@
 document.getElementById('export-kmz').addEventListener('click', exportKMZ);
 
+// KMZ File Loader
+document.getElementById('show-load-kmz').addEventListener('click', function () {
+  document.getElementById('load-kmz').click();
+});
+
+document.getElementById('load-kmz').addEventListener('change', function (event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+      JSZip.loadAsync(e.target.result).then(zip => {
+          return zip.file("doc.kml").async("string");
+      }).then(parseKML);
+  };
+  reader.readAsArrayBuffer(file);
+});
 
 
 // Function to create KML content with waypoints and path
@@ -63,6 +80,8 @@ function createKMLContent(waypoints, pathCoordinates, returnCoordinates = null) 
       </Document>
     </kml>`;
 
+    deleteStartingWaypoint()
+
     return kmlContent;
 }
 
@@ -96,67 +115,68 @@ function exportKMZ() {
         });
 }
 
-// KMZ File Loader
-document.getElementById('show-load-kmz').addEventListener('click', function () {
-    document.getElementById('load-kmz').click();
-});
-
-document.getElementById('load-kmz').addEventListener('change', function (event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        JSZip.loadAsync(e.target.result).then(zip => {
-            return zip.file("doc.kml").async("string");
-        }).then(parseKML);
-    };
-    reader.readAsArrayBuffer(file);
-});
-
 // Function to parse loaded KML data and add waypoints and paths
 function parseKML(kmlText) {
-    const parser = new DOMParser();
-    const kml = parser.parseFromString(kmlText, "application/xml");
+  const parser = new DOMParser();
+  const kml = parser.parseFromString(kmlText, "application/xml");
 
-    const placemarks = kml.getElementsByTagName("Placemark");
-    waypoints.forEach(wp => map.removeLayer(wp.marker));
-    paths.forEach(path => map.removeLayer(path));
-    waypoints = [];
-    paths = [];
+  const placemarks = kml.getElementsByTagName("Placemark");
 
-    Array.from(placemarks).forEach(placemark => {
-        const point = placemark.getElementsByTagName("Point")[0];
-        const lineString = placemark.getElementsByTagName("LineString")[0];
-        const description = placemark.getElementsByTagName("description")[0]?.textContent || '';
+  // Clear existing waypoints and paths from the map
+  waypoints.forEach(wp => map.removeLayer(wp.marker));
+  paths.forEach(path => map.removeLayer(path));
+  waypoints = [];
+  paths = [];
 
-        if (point) {
-            const coords = point.getElementsByTagName("coordinates")[0].textContent.trim().split(",");
-            const latlng = L.latLng(parseFloat(coords[1]), parseFloat(coords[0]));
-            
-            // Extract altitude, speed, and gimbal from description
-            const altitudeMatch = description.match(/Altitude: (\d+\.?\d*)/);
-            const speedMatch = description.match(/Speed: (\d+\.?\d*)/);
-            const gimbalMatch = description.match(/Gimbal Angle: (\d+\.?\d*)/);
+  // Declare waypointLatLngs array to store coordinates of waypoints
+  const waypointLatLngs = [];
 
-            const altitude = altitudeMatch ? parseFloat(altitudeMatch[1]) : 0;
-            const speed = speedMatch ? parseFloat(speedMatch[1]) : 0;
-            const gimbal = gimbalMatch ? parseFloat(gimbalMatch[1]) : 0;
+  Array.from(placemarks).forEach(placemark => {
+      const point = placemark.getElementsByTagName("Point")[0];
+      const lineString = placemark.getElementsByTagName("LineString")[0];
+      const description = placemark.getElementsByTagName("description")[0]?.textContent || '';
 
-            addWaypoint(latlng, altitude, speed, gimbal);
-        }
+      if (point) {
+          const coords = point.getElementsByTagName("coordinates")[0].textContent.trim().split(",");
+          const latlng = L.latLng(parseFloat(coords[1]), parseFloat(coords[0]));
 
-        if (lineString) {
-            const coords = lineString.getElementsByTagName("coordinates")[0].textContent.trim().split(/\s+/);
-            const pathCoordinates = coords.map(coord => {
-                const [lng, lat] = coord.split(",").map(Number);
-                return L.latLng(lat, lng);
-            });
+          // Add the LatLng to the waypointLatLngs array
+          waypointLatLngs.push(latlng);
 
-            if (pathCoordinates.length > 1) {
-                const newPath = L.polyline(pathCoordinates, { color: 'blue' }).addTo(map);
-                paths.push(newPath);
-            }
-        }
-    });
+          // Extract altitude, speed, and gimbal from description
+          const altitudeMatch = description.match(/Altitude: (\d+\.?\d*)/);
+          const speedMatch = description.match(/Speed: (\d+\.?\d*)/);
+          const gimbalMatch = description.match(/Gimbal Angle: (\d+\.?\d*)/);
+
+          const altitude = altitudeMatch ? parseFloat(altitudeMatch[1]) : 0;
+          const speed = speedMatch ? parseFloat(speedMatch[1]) : 0;
+          const gimbal = gimbalMatch ? parseFloat(gimbalMatch[1]) : 0;
+
+          // Add waypoint to the map and list
+          addWaypoint(latlng, altitude, speed, gimbal);
+      }
+
+      if (lineString) {
+          const coords = lineString.getElementsByTagName("coordinates")[0].textContent.trim().split(/\s+/);
+          const pathCoordinates = coords.map(coord => {
+              const [lng, lat] = coord.split(",").map(Number);
+              return L.latLng(lat, lng);
+          });
+
+          if (pathCoordinates.length > 1) {
+              const newPath = L.polyline(pathCoordinates, { color: 'blue' }).addTo(map);
+              paths.push(newPath);
+          }
+      }
+  });
+
+  // Check if any waypoints were added, then fit the map to those bounds
+  if (waypointLatLngs.length > 0) {
+      const bounds = L.latLngBounds(waypointLatLngs);
+      console.log("Calculated Bounds:", bounds);  // Log the bounds for debugging
+
+      map.fitBounds(bounds);  // Fit the map to the bounds of the waypoints
+  } else {
+      console.error("No waypoints found, cannot adjust map view.");
+  }
 }

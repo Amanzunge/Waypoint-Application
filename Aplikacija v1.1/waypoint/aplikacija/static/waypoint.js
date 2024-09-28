@@ -313,8 +313,38 @@ function addStartingWaypoint() {
         wp.marker.setPopupContent(createPopupContent(wp.latlng, wp.altitude, wp.speed, wp.gimbal, wp.order, false));
     });
 
-    //ubaci popup
     // Update the paths
     updatePaths();
 }
 
+function deleteStartingWaypoint() {
+    // Remove the first waypoint from the waypoints array
+    const startingWaypoint = waypoints.shift();
+
+    // Remove the marker for the starting waypoint from the map
+    if (startingWaypoint.marker) {
+        map.removeLayer(startingWaypoint.marker);
+    }
+
+    // Reindex the remaining waypoints and update their markers
+    waypoints.forEach((wp, index) => {
+        wp.order = index + 1;  // Update the order of each remaining waypoint
+        wp.marker.setPopupContent(createPopupContent(wp.latlng, wp.altitude, wp.speed, wp.gimbal, wp.order));
+    });
+
+    // Update the paths, distances, and total flight length
+    updatePaths();
+    updateDistances();
+    updateWaypointIcons();
+    updateTotalFlightLength();
+}
+
+// Function to clear all waypoints
+function clearAllWaypoints() {
+    waypoints.forEach(waypoint => {
+        map.removeLayer(waypoint.marker);
+    });
+    waypoints = [];
+    updatePaths();
+    updateTotalFlightLength();
+}
