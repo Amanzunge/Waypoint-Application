@@ -274,71 +274,6 @@ function setupGlobalHeightSlider() {
     });
 }
 
-// Function to add the starting waypoint with altitude set to 0m
-function addStartingWaypoint() {
-    // Ensure there is at least one waypoint to copy the coordinates from
-    if (waypoints.length === 0) {
-        console.error("No waypoints exist. Please add the first waypoint.");
-        return;
-    }
-
-    // Get the coordinates of the first waypoint
-    const firstWaypoint = waypoints[0];
-    const firstLatLng = firstWaypoint.latlng;
-
-    // Set altitude to 0 (or any other value you want to fix for the starting point)
-    const altitude = 0;
-    const speed = firstWaypoint.speed;  // You can also copy speed or set it to default
-    const gimbal = firstWaypoint.gimbal; // Copy or set default gimbal angle
-
-
-    const marker = L.marker(firstLatLng, {
-        draggable: true,
-        icon: createCustomColorIcon('orange')
-    }).addTo(map);
-
-    // Add the waypoint to the waypoints array
-    waypoints.unshift({
-        latlng: firstLatLng,
-        altitude: altitude,
-        speed: speed,
-        gimbal: gimbal,
-        marker: marker,
-        order: 1  // Mark it as the first waypoint
-    });
-
-    // Reindex the remaining waypoints and update markers
-    waypoints.forEach((wp, index) => {
-        wp.order = index + 1;  // Update order for all waypoints
-        wp.marker.setPopupContent(createPopupContent(wp.latlng, wp.altitude, wp.speed, wp.gimbal, wp.order, false));
-    });
-
-    // Update the paths
-    updatePaths();
-}
-
-function deleteStartingWaypoint() {
-    // Remove the first waypoint from the waypoints array
-    const startingWaypoint = waypoints.shift();
-
-    // Remove the marker for the starting waypoint from the map
-    if (startingWaypoint.marker) {
-        map.removeLayer(startingWaypoint.marker);
-    }
-
-    // Reindex the remaining waypoints and update their markers
-    waypoints.forEach((wp, index) => {
-        wp.order = index + 1;  // Update the order of each remaining waypoint
-        wp.marker.setPopupContent(createPopupContent(wp.latlng, wp.altitude, wp.speed, wp.gimbal, wp.order));
-    });
-
-    // Update the paths, distances, and total flight length
-    updatePaths();
-    updateDistances();
-    updateWaypointIcons();
-    updateTotalFlightLength();
-}
-
 // Function to clear all waypoints
 function clearAllWaypoints() {
     waypoints.forEach(waypoint => {
@@ -346,5 +281,7 @@ function clearAllWaypoints() {
     });
     waypoints = [];
     updatePaths();
+    updateDistances();
     updateTotalFlightLength();
+    updateWaypointIcons();
 }
