@@ -29,36 +29,21 @@
         <input type="number" id="altitude" placeholder="Altitude (m)">
         <input type="number" id="speed" placeholder="Speed (m/s)">
         <input type="number" id="gimbal" placeholder="Gimbal Angle (°)">
+        <input type="number" id="distance" placeholder="Distance for Polygon">
     </div>
     <div id="controls">
         <button id="enable-path" onclick="enablePath()">Enable Path</button>
         <button id="disable-path" onclick="disablePath()">Disable Path</button>
         <button onclick="clearAllWaypoints()">Delete All Waypoints</button>
         <button id="export-kmz">Export KMZ</button>
-        <input type="file" id="load-kmz" accept=".kmz" style="display: none;">
-        <button id="show-load-kmz" style="cursor: pointer;">Load KMZ</button>
+        <input type="file" id="file-kmz" accept=".kmz" style="display: none;">
+        <button id="load-kmz-button" style="cursor: pointer;">Load KMZ</button>
     </div>
     <br>
     <div id="global-height-control">
         <label for="global-height-slider">Global Waypoint Height: <span id="global-height-value">1</span> m</label>
         <input type="range" id="global-height-slider" min="0" max="15" value="1" step="1">
     </div>
-
-        <fieldset>
-            <legend>Return Options</legend>
-            <div class="group">
-                <input type="radio" id="return-none" name="return-option" value="none" checked>
-                <label for="return-none">No Return</label>
-            </div>
-            <div class="group">
-                <input type="radio" id="return-through-all" name="return-option" value="through-all">
-                <label for="return-through-all">Return Through All Waypoints</label>               
-            </div>
-            <div class="group">
-                <input type="radio" id="return-direct" name="return-option" value="direct">
-                <label for="return-direct">Return Directly to First Waypoint</label>               
-            </div>
-        </fieldset>
     <label id="totalFlightLength">Total Flight Length: 0 m</label>
     <div id="map" ></div>
 </body>

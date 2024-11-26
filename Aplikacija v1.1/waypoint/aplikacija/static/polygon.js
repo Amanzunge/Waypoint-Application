@@ -13,7 +13,8 @@ map.addControl(drawControl);
 
 // Variable to store the drawn polygon
 var drawnPolygon = null;
-
+let gimbal = 0;
+let speed = 0;
 // Event listener for when a polygon is drawn
 map.on(L.Draw.Event.CREATED, function (event) {
     var layer = event.layer;
@@ -28,8 +29,15 @@ map.on(L.Draw.Event.CREATED, function (event) {
         drawnPolygon = layer;
         map.addLayer(drawnPolygon);
 
-        // Generate waypoints inside the polygon
-        generateWaypointsOnPolygonEdges(drawnPolygon);
+        // Ensure polygon is fully closed
+        var polygonLatLngs = drawnPolygon.getLatLngs()[0];
+        if (polygonLatLngs.length > 2) {
+            gimbal = document.getElementById('gimbal').value || 0;
+            speed = document.getElementById('speed').value || 0;
+            
+            // Generate waypoints inside the polygon
+            generateWaypointsOnPolygonEdges(drawnPolygon);
+        }
     }
 });
 
@@ -37,22 +45,32 @@ function generateWaypointsOnPolygonEdges(polygon) {
     var polygonLatLngs = polygon.getLatLngs()[0];
     
     // Define the distance between waypoints (in meters)
-    var waypointDistance = 10; // Adjust this value as needed
+    const waypointDistance = document.getElementById('distance').value || 20; 
+
+    const gimbal = document.getElementById('gimbal').value || 0;
+    const speed = document.getElementById('speed').value || 0;
+
+    // Clear existing waypoints before generating new ones
+    clearAllWaypoints();
 
     for (var i = 0; i < polygonLatLngs.length; i++) {
         var start = polygonLatLngs[i];
-        var end = polygonLatLngs[(i + 1) % polygonLatLngs.length]; // Wrap around to the first point for the last edge
+        var end = polygonLatLngs[(i + 1) % polygonLatLngs.length];
         
         var distance = start.distanceTo(end);
         var numWaypoints = Math.floor(distance / waypointDistance);
         
-        for (var j = 0; j <= numWaypoints; j++) {
+        // Add first point (start of the edge)
+        addWaypoint(start, globalHeight, speed, gimbal);
+        
+        // Add intermediate points
+        for (var j = 1; j < numWaypoints; j++) {
             var ratio = j / numWaypoints;
             var lat = start.lat + (end.lat - start.lat) * ratio;
             var lng = start.lng + (end.lng - start.lng) * ratio;
             
             var point = L.latLng(lat, lng);
-            addWaypoint(point, globalHeight, 5, 0); // Using default values for speed and gimbal
+            addWaypoint(point, globalHeight, speed, gimbal);
         }
     }
 
@@ -61,6 +79,7 @@ function generateWaypointsOnPolygonEdges(polygon) {
     updateWaypointIcons();
     updateTotalFlightLength();
     setupGlobalHeightSlider();
+    deletePolygon();
 }
 
 function isPointInPolygon(point, polygon) {
@@ -75,4 +94,10 @@ function isPointInPolygon(point, polygon) {
         if (intersect) inside = !inside;
     }
     return inside;
+}
+
+function deletePolygon(){
+    if (drawnPolygon) {
+        map.removeLayer(drawnPolygon);
+    }
 }

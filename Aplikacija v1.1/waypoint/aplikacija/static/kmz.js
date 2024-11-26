@@ -1,19 +1,39 @@
 document.getElementById('export-kmz').addEventListener('click', exportKMZ);
 // KMZ File Loader
-document.getElementById('show-load-kmz').addEventListener('click', function () {
-  document.getElementById('load-kmz').click();
+document.getElementById('load-kmz-button').addEventListener('click', function() {
+  document.getElementById('file-kmz').click();
 });
 
-document.getElementById('load-kmz').addEventListener('change', function (event) {
+document.getElementById('file-kmz').addEventListener('change', function (event) {
+  console.log('KMZ file selected'); // Debug log
+
   const file = event.target.files[0];
-  if (!file) return;
+  if (!file) {
+    console.error('No file selected');
+    return;
+  }
+
+  console.log('File name:', file.name); // Debug log
 
   const reader = new FileReader();
   reader.onload = function (e) {
-      JSZip.loadAsync(e.target.result).then(zip => {
-          return zip.file("doc.kml").async("string");
-      }).then(parseKML);
+    console.log('File loaded successfully'); // Debug log
+    JSZip.loadAsync(e.target.result)
+      .then(zip => {
+        console.log('Zip files:', Object.keys(zip.files)); // Debug file contents
+        return zip.file("wpmz/template.kml").async("string");
+      })
+      .then(importKMZFile(file))
+      .catch(error => {
+        console.error('Error parsing KMZ:', error);
+        alert('Failed to parse KMZ file. Check console for details.');
+      });
   };
+
+  reader.onerror = function(error) {
+    console.error('File reading error:', error);
+  };
+
   reader.readAsArrayBuffer(file);
 });
 
@@ -381,3 +401,140 @@ function stringToUint8Array(str) {
   const encoder = new TextEncoder();
   return encoder.encode(str);
 }
+
+
+function importKMZFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      JSZip.loadAsync(e.target.result)
+        .then(zip => {
+          const wpmlFile = zip.file("wpmz/waylines.wpml");
+          
+          if (!wpmlFile) {
+            throw new Error('Waylines WPML file not found in wpmz folder');
+          }
+          
+          return wpmlFile.async("string");
+        })
+        .then(wpmlContent => {
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(wpmlContent, "text/xml");
+          
+          // Clear existing waypoints
+          clearAllWaypoints();
+          waypoints.forEach(waypoint => {
+            map.removeLayer(waypoint.marker);
+          });
+          waypoints = [];
+
+          // Select all Placemark elements
+          const placemarks = xmlDoc.getElementsByTagName('Placemark');
+
+          // If no waypoints, reject the promise
+          if (placemarks.length === 0) {
+            throw new Error('No waypoints found in the KMZ file');
+          }
+
+          // Collect all coordinates to calculate the center
+          const coordinates = [];
+
+          for (let i = 0; i < placemarks.length; i++) {
+            const placemark = placemarks[i];
+            
+            // Parse coordinates (longitude, latitude)
+            const coordsElement = placemark.querySelector('coordinates');
+            if (!coordsElement) continue;
+
+            const coords = coordsElement.textContent.trim().split(',');
+            const latlng = L.latLng(parseFloat(coords[1]), parseFloat(coords[0]));
+            coordinates.push(latlng);
+            
+            const order = i + 1;
+            const color = order === 1 ? 'orange' : 'gold';
+
+            // Carefully extract values with more robust parsing
+            const altitudeElement = placemark.querySelector('wpml\\:executeHeight');
+            const speedElement = placemark.querySelector('wpml\\:waypointSpeed');
+            const gimbalElement = placemark.querySelector('wpml\\:gimbalPitchRotateAngle');
+
+            // Parse values, using more careful extraction
+            const altitude = altitudeElement 
+              ? parseFloat(altitudeElement.textContent.trim()) 
+              : 10; // Default to 10 if not found
+
+            const speed = speedElement
+              ? parseFloat(speedElement.textContent.trim()) 
+              : 2.5; // Default to 2.5 if not found
+
+            const gimbal = gimbalElement
+              ? parseFloat(gimbalElement.textContent.trim()) 
+              : -90; // Default to 0 if not found
+
+            // Create marker
+            const marker = L.marker(latlng, {
+              draggable: true,
+              icon: createCustomColorIcon(color)
+            }).addTo(map)
+              .bindPopup(createPopupContent(latlng, altitude, speed, gimbal, order));
+
+            attachPopupEvents(marker);
+            bindDragEvents(marker);
+
+            // Push waypoint to array
+            waypoints.push({
+              latlng: latlng,
+              altitude: altitude,
+              speed: speed,
+              gimbal: gimbal,
+              marker: marker,
+              order: order
+            });
+          }
+
+          // Calculate the center of all coordinates
+          const bounds = L.latLngBounds(coordinates);
+          
+          // Fit the map to the bounds of waypoints with some padding
+          map.fitBounds(bounds, {
+            padding: [50, 50], // 50 pixels padding on each side
+          });
+
+          // Trigger updates
+          updateDistances();
+          updatePaths();
+          updateWaypointIcons();
+          updateTotalFlightLength();
+          setupGlobalHeightSlider();
+
+          resolve(waypoints);
+        })
+        .catch(error => {
+          console.error('Error parsing KMZ:', error);
+          reject(error);
+        });
+    };
+    
+    reader.onerror = function(error) {
+      console.error('File reading error:', error);
+      reject(error);
+    };
+    
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// Example event listener
+document.getElementById('file-kmz').addEventListener('change', function (event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  importKMZFile(file)
+    .then(waypoints => {
+      console.log('Imported waypoints:', waypoints);
+      // Additional processing if needed
+    })
+    .catch(error => {
+      alert('Failed to parse KMZ file: ' + error.message);
+    });
+});

@@ -78,22 +78,12 @@ function deleteWaypoint(marker) {
     // Remove the waypoint from the waypoints array
     waypoints.splice(waypointIndex, 1);
 
-    console.log('Waypoints array after deletion:', waypoints.map(wp => ({
-        latlng: wp.latlng,
-        order: wp.order
-    })));
 
     //Reorder the remaining waypoints
     waypoints.forEach((wp, index) => {
         wp.order = index + 1; //+1 Update the order based on the new index
         wp.marker.setPopupContent(createPopupContent(wp.latlng, wp.altitude, wp.speed, wp.gimbal, wp.order, false));
     });
-
-    console.log('Waypoints array after reindexing:', waypoints.map(wp => ({
-        latlng: wp.latlng,
-        order: wp.order
-    })));
-
 
     // Update paths, distances, and waypoint icons
     updatePaths();
@@ -103,18 +93,6 @@ function deleteWaypoint(marker) {
 }
 // Update function
 function saveWaypoint(marker) {
-    //console.log('Saving waypoint for marker:', marker);
-    const waypoint = waypoints.find(wp => wp.marker === marker);
-    if (!waypoint) {
-        console.error('Waypoint not found for marker');
-        return;
-    }
-
-    const popupElement = marker.getPopup().getElement();
-    if (!popupElement) {
-        console.error('Popup element not found');
-        return;
-    }
 
     // Helper function to safely get input values
     const getInputValue = (selector, defaultValue) => {
