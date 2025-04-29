@@ -1,0 +1,194 @@
+document.getElementById('export-kmz').addEventListener('click', exportKMZ);
+
+// KMZ File Loader
+document.getElementById('show-load-kmz').addEventListener('click', function () {
+  document.getElementById('load-kmz').click();
+});
+
+document.getElementById('load-kmz').addEventListener('change', function (event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+      JSZip.loadAsync(e.target.result).then(zip => {
+          return zip.file("doc.kml").async("string");
+      }).then(parseKML);
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// Function to create KML content with waypoints and path
+function createKMLContent(waypoints, pathCoordinates, returnCoordinates = null) {
+  // Get current timestamp for creation and update times
+  const currentTime = Date.now();
+  
+  let kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+  <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:wpml="http://www.dji.com/wpmz/1.0.2">
+    <Document>
+      <wpml:author>DJI Waypoint Mission</wpml:author>
+      <wpml:createTime>${currentTime}</wpml:createTime>
+      <wpml:updateTime>${currentTime}</wpml:updateTime>
+      
+      <wpml:missionConfig>
+        <wpml:flyToWaylineMode>safely</wpml:flyToWaylineMode>
+        <wpml:finishAction>goHome</wpml:finishAction>
+        <wpml:exitOnRCLost>goContinue</wpml:exitOnRCLost>
+        <wpml:executeRCLostAction>hover</wpml:executeRCLostAction>
+        <wpml:takeOffSecurityHeight>${waypoints[0]?.altitude || 3.5}</wpml:takeOffSecurityHeight>
+        <wpml:takeOffRefPoint>${waypoints[0]?.latlng.lng},${waypoints[0]?.latlng.lat},${waypoints[0]?.altitude || 3.5}</wpml:takeOffRefPoint>
+        <wpml:takeOffRefPointAGLHeight>${waypoints[0]?.altitude || 3.5}</wpml:takeOffRefPointAGLHeight>
+        <wpml:globalTransitionalSpeed>${waypoints[0]?.speed || 0.3}</wpml:globalTransitionalSpeed>
+        <wpml:droneInfo>
+          <wpml:droneEnumValue>67</wpml:droneEnumValue>
+          <wpml:droneSubEnumValue>0</wpml:droneSubEnumValue>
+        </wpml:droneInfo>
+      </wpml:missionConfig>
+
+      <Folder>
+        <wpml:templateType>waypoint</wpml:templateType>
+        <wpml:templateId>0</wpml:templateId>
+        <wpml:waylineCoordinateSysParam>
+          <wpml:coordinateMode>WGS84</wpml:coordinateMode>
+          <wpml:heightMode>EGM96</wpml:heightMode>
+          <wpml:globalShootHeight>${waypoints[0]?.altitude || 3.5}</wpml:globalShootHeight>
+          <wpml:positioningType>GPS</wpml:positioningType>
+        </wpml:waylineCoordinateSysParam>
+        <wpml:autoFlightSpeed>${waypoints[0]?.speed || 0.3}</wpml:autoFlightSpeed>
+        <wpml:gimbalPitchMode>usePointSetting</wpml:gimbalPitchMode>`;
+
+  // Loop through waypoints and create placemarks for each
+  waypoints.forEach((wp, index) => {
+      kmlContent += `
+        <Placemark>
+          <Point>
+            <coordinates>${wp.latlng.lng},${wp.latlng.lat}</coordinates>
+          </Point>
+          <wpml:index>${index}</wpml:index>
+          <wpml:height>${wp.altitude}</wpml:height>
+          <wpml:gimbalPitchAngle>${wp.gimbal}</wpml:gimbalPitchAngle>
+          <wpml:actionGroup>
+            <wpml:actionGroupId>${index}</wpml:actionGroupId>
+            <wpml:actionGroupStartIndex>${index + 1}</wpml:actionGroupStartIndex>
+            <wpml:actionGroupEndIndex>${index + 1}</wpml:actionGroupEndIndex>
+            <wpml:actionGroupMode>sequence</wpml:actionGroupMode>
+            <wpml:actionTrigger>
+              <wpml:actionTriggerType>reachPoint</wpml:actionTriggerType>
+            </wpml:actionTrigger>
+            <wpml:action>
+              <wpml:actionId>${index}</wpml:actionId>
+              <wpml:actionActuatorFunc>gimbalRotate</wpml:actionActuatorFunc>
+              <wpml:actionActuatorFuncParam>
+                <wpml:gimbalRotateMode>absoluteAngle</wpml:gimbalRotateMode>
+                <wpml:gimbalPitchRotateEnable>1</wpml:gimbalPitchRotateEnable>
+                <wpml:gimbalPitchRotateAngle>${wp.gimbal}</wpml:gimbalPitchRotateAngle>
+                <wpml:gimbalRotateTimeEnable>0</wpml:gimbalRotateTimeEnable>
+                <wpml:payloadPositionIndex>0</wpml:payloadPositionIndex>
+              </wpml:actionActuatorFuncParam>
+            </wpml:action>
+          </wpml:actionGroup>
+        </Placemark>`;
+  });
+
+  kmlContent += `
+      </Folder>
+    </Document>
+  </kml>`;
+  return kmlContent;
+}
+
+// Export KMZ Function
+function exportKMZ() {
+  const pathCoordinates = waypoints.map(wp => wp.latlng);
+  let returnCoordinates = null;
+
+  // Handle return path based on selected option
+  if (returnOption === 'through-all') {
+      returnCoordinates = [...pathCoordinates].reverse();
+  } else if (returnOption === 'direct' && waypoints.length > 1) {
+      const firstWaypoint = waypoints[0].latlng;
+      const lastWaypoint = waypoints[waypoints.length - 1].latlng;
+      returnCoordinates = [lastWaypoint, firstWaypoint];
+  }
+
+  const kmlContent = createKMLContent(waypoints, pathCoordinates, returnCoordinates);
+
+  // Create KMZ (zip) file using JSZip
+  const zip = new JSZip();
+  zip.file('doc.kml', kmlContent);
+
+  // Generate KMZ (as blob) and prompt download
+  zip.generateAsync({ type: 'blob' })
+      .then(function (content) {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(content);
+          a.download = 'waypoints.kmz';
+          a.click();
+      });
+}
+
+// Function to parse loaded KML data and add waypoints and paths
+function parseKML(kmlText) {
+  const parser = new DOMParser();
+  const kml = parser.parseFromString(kmlText, "application/xml");
+
+  const placemarks = kml.getElementsByTagName("Placemark");
+
+  // Clear existing waypoints and paths from the map
+  waypoints.forEach(wp => map.removeLayer(wp.marker));
+  paths.forEach(path => map.removeLayer(path));
+  waypoints = [];
+  paths = [];
+
+  // Declare waypointLatLngs array to store coordinates of waypoints
+  const waypointLatLngs = [];
+
+  Array.from(placemarks).forEach(placemark => {
+      const point = placemark.getElementsByTagName("Point")[0];
+      const lineString = placemark.getElementsByTagName("LineString")[0];
+      const description = placemark.getElementsByTagName("description")[0]?.textContent || '';
+
+      if (point) {
+          const coords = point.getElementsByTagName("coordinates")[0].textContent.trim().split(",");
+          const latlng = L.latLng(parseFloat(coords[1]), parseFloat(coords[0]));
+
+          // Add the LatLng to the waypointLatLngs array
+          waypointLatLngs.push(latlng);
+
+          // Extract altitude, speed, and gimbal from description
+          const altitudeMatch = description.match(/Altitude: (\d+\.?\d*)/);
+          const speedMatch = description.match(/Speed: (\d+\.?\d*)/);
+          const gimbalMatch = description.match(/Gimbal Angle: (\d+\.?\d*)/);
+
+          const altitude = altitudeMatch ? parseFloat(altitudeMatch[1]) : 0;
+          const speed = speedMatch ? parseFloat(speedMatch[1]) : 0;
+          const gimbal = gimbalMatch ? parseFloat(gimbalMatch[1]) : 0;
+
+          // Add waypoint to the map and list
+          addWaypoint(latlng, altitude, speed, gimbal);
+      }
+
+      if (lineString) {
+          const coords = lineString.getElementsByTagName("coordinates")[0].textContent.trim().split(/\s+/);
+          const pathCoordinates = coords.map(coord => {
+              const [lng, lat] = coord.split(",").map(Number);
+              return L.latLng(lat, lng);
+          });
+
+          if (pathCoordinates.length > 1) {
+              const newPath = L.polyline(pathCoordinates, { color: 'blue' }).addTo(map);
+              paths.push(newPath);
+          }
+      }
+  });
+
+  // Check if any waypoints were added, then fit the map to those bounds
+  if (waypointLatLngs.length > 0) {
+      const bounds = L.latLngBounds(waypointLatLngs);
+      console.log("Calculated Bounds:", bounds);  // Log the bounds for debugging
+
+      map.fitBounds(bounds);  // Fit the map to the bounds of the waypoints
+  } else {
+      console.error("No waypoints found, cannot adjust map view.");
+  }
+}
