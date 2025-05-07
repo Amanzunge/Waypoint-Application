@@ -37,7 +37,7 @@ This application is a browser-based waypoint mission planner designed for DJI dr
 3. Use the popup to configure waypoint altitude, gimbal angle, speed, and action.
 4. Set a POI using right-click (context menu) on the map.
 5. Use buttons to export KMZ or import a saved mission.
-6. Load the exported KMZ into your DJI controller by replacing a dummy mission.
+6. Load the exported KMZ into your DJI controller by replacing a dummy mission. (Android/data/dji.go.v5/files/waypoint/LAST_CREATED_FOLDER)
 
 ## Dependencies
 - Leaflet.js (map interface)
@@ -47,9 +47,3 @@ This application is a browser-based waypoint mission planner designed for DJI dr
 ## Compatibility
 - Tested with DJI Mavic 3 Pro
 - Produces DJI Fly-compatible KMZ files (with waypoint actions and gimbal rotation)
-
-## License
-This project is open-source and provided under the MIT License.
-
----
-Made with ❤️ for custom drone mission planning.
