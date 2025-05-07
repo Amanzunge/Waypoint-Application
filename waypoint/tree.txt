@@ -1,0 +1,72 @@
+Folder PATH listing
+Volume serial number is 3661-199B
+D:.
+³   db.sqlite3
+³   manage.py
+³   tree.txt
+³   Uputstvo.txt
+³   
+ÃÄÄÄaplikacija
+³   ³   admin.py
+³   ³   apps.py
+³   ³   models.py
+³   ³   tests.py
+³   ³   urls.py
+³   ³   views.py
+³   ³   __init__.py
+³   ³   
+³   ÃÄÄÄmigrations
+³   ³   ³   __init__.py
+³   ³   ³   
+³   ³   ÀÄÄÄ__pycache__
+³   ³           __init__.cpython-310.pyc
+³   ³           
+³   ÃÄÄÄstatic
+³   ³   ³   kmz.js
+³   ³   ³   path.js
+³   ³   ³   poi.js
+³   ³   ³   polygon.js
+³   ³   ³   popup.js
+³   ³   ³   style.css
+³   ³   ³   waypoint.js
+³   ³   ³   
+³   ³   ÀÄÄÄicons
+³   ³           marker-icon-gold.png
+³   ³           marker-icon-orange.png
+³   ³           marker-icon-red.png
+³   ³           marker-shadow.png
+³   ³           
+³   ÃÄÄÄtemplates
+³   ³       index.html
+³   ³       
+³   ÀÄÄÄ__pycache__
+³           admin.cpython-310.pyc
+³           admin.cpython-312.pyc
+³           apps.cpython-310.pyc
+³           apps.cpython-312.pyc
+³           models.cpython-310.pyc
+³           models.cpython-312.pyc
+³           urls.cpython-310.pyc
+³           urls.cpython-312.pyc
+³           views.cpython-310.pyc
+³           views.cpython-312.pyc
+³           __init__.cpython-310.pyc
+³           __init__.cpython-312.pyc
+³           
+ÀÄÄÄwaypoint
+    ³   asgi.py
+    ³   settings.py
+    ³   urls.py
+    ³   wsgi.py
+    ³   __init__.py
+    ³   
+    ÀÄÄÄ__pycache__
+            settings.cpython-310.pyc
+            settings.cpython-312.pyc
+            urls.cpython-310.pyc
+            urls.cpython-312.pyc
+            wsgi.cpython-310.pyc
+            wsgi.cpython-312.pyc
+            __init__.cpython-310.pyc
+            __init__.cpython-312.pyc
+            
