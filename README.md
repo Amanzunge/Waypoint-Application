@@ -2,13 +2,35 @@
 
 ## Project Structure
 ```
-./index.html
-./waypoint.js
-./popup.js
-./kmz.js
-./polygon.js
-./poi.js
-./path.js
+waypoint/
+├── db.sqlite3
+├── manage.py
+├── Uputstvo.txt
+├── tree.txt
+├── aplikacija/
+│   ├── admin.py
+│   ├── apps.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   ├── __init__.py
+│   ├── static/
+│   │   ├── kmz.js
+│   │   ├── path.js
+│   │   ├── poi.js
+│   │   ├── polygon.js
+│   │   ├── popup.js
+│   │   ├── waypoint.js
+│   │   ├── style.css
+│   │   └── icons/
+│   └── templates/
+│       └── index.html
+└── waypoint/
+    ├── settings.py
+    ├── urls.py
+    ├── wsgi.py
+    └── __init__.py
 ```
 
 ## Overview
@@ -32,12 +54,12 @@ This application is a browser-based waypoint mission planner designed for DJI dr
 - `path.js`: Path rendering between waypoints and flight length calculation
 
 ## How to Use
-1. Open the `index.html` in a modern web browser.
-2. Click on the map to add waypoints or use the polygon tool.
+1. Run the Django server using `python manage.py runserver`.
+2. Open `http://127.0.0.1:8000/` in your browser.
 3. Use the popup to configure waypoint altitude, gimbal angle, speed, and action.
 4. Set a POI using right-click (context menu) on the map.
 5. Use buttons to export KMZ or import a saved mission.
-6. Load the exported KMZ into your DJI controller by replacing a dummy mission. (Android/data/dji.go.v5/files/waypoint/LAST_CREATED_FOLDER)
+6. Load the exported KMZ into your DJI controller by replacing a dummy mission (Android/data/dji.go.v5/files/waypoint/LAST_CREATED_FOLDER).
 
 ## Dependencies
 - Leaflet.js (map interface)
